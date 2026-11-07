@@ -1,0 +1,51 @@
+server:
+  port: 19003
+
+spring:
+  application:
+    name: leave-mcp-server
+  ai:
+    mcp:
+      server:
+        name: leave-mcp-server
+        version: 0.0.1
+        # Streamable HTTP（MCP の現行トランスポート）。エンドポイントは /mcp。
+        protocol: STREAMABLE
+        streamable-http:
+          mcp-endpoint: /mcp
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: http://localhost:19000/realms/sample-corp
+          # この MCP Server 宛てのトークンだけ受け付ける（MCP 仕様の MUST）。
+          # aud=leave-mcp-server は claude-desktop の optional scope「leave-mcp-server」の audience mapper が付ける。
+          audiences: leave-mcp-server
+  jackson:
+    time-zone: Asia/Tokyo
+
+app:
+  # RFC 9728 Protected Resource Metadata。resource は MCP クライアントが繋ぐ URL そのもの。
+  # Claude Desktop から使うときは公開 URL（https://…/mcp）に上書きする（APP_PRM_RESOURCE）。
+  prm:
+    resource: http://localhost:19003/mcp
+    # 401 の WWW-Authenticate と PRM の scopes_supported に載せる scope（スペース区切り）。最初の認可で要求してもらう最小の組:
+    #   - leave-mcp-server: aud=leave-mcp-server のトークンを Keycloak に出してもらうため
+    #     （Keycloak は RFC 8707 の resource を既定では見ないので、scope で audience を運ぶ）。
+    #   - leave-mcp:read: 参照系ツール用。更新系（leave-mcp:write）は載せず、要るときに 403 insufficient_scope で要求する（step-up）。
+    scope: leave-mcp-server leave-mcp:read
+
+  leave-api:
+    base-url: http://localhost:19002
+
+  # Outbound: RFC 8693 Token Exchange — Claude のトークン（aud=leave-mcp-server）→ aud=leave-api（impersonation）。
+  #   token-uri はトンネルモードでも localhost のままでよい（Keycloak の KC_HOSTNAME で iss は公開 URL に固定される）。
+  outbound:
+    token-uri: http://localhost:19000/realms/sample-corp/protocol/openid-connect/token
+    client-id: leave-mcp-server
+    client-secret: leave-mcp-server-secret
+    scope: leave-api
+
+logging:
+  level:
+    org.springframework.security: INFO

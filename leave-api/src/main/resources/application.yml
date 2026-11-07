@@ -1,0 +1,24 @@
+server:
+  port: 19002
+
+spring:
+  application:
+    name: leave-api
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: http://localhost:19000/realms/sample-corp
+          # このAPI宛てのトークンだけ受け付ける。MCP Server は Claude のトークン（aud=leave-mcp-server）を
+          # Token Exchange で aud=leave-api のトークンに替えてから呼ぶので、leave-mcp-server 宛てのトークンは受け付けない。
+          audiences: leave-api
+          # 主体名とロールは EmployeeAuthenticationConverter が決める（ロールは社員マスタから。トークンのロールは見ない）。
+  mvc:
+    problemdetails:
+      enabled: true
+  jackson:
+    time-zone: Asia/Tokyo
+
+logging:
+  level:
+    org.springframework.security: INFO

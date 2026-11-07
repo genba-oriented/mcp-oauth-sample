@@ -1,0 +1,176 @@
+{
+  "realm": "sample-corp",
+  "displayName": "株式会社サンプル（自社IdP）",
+  "enabled": true,
+  "registrationAllowed": false,
+  "revokeRefreshToken": true,
+  "clientScopes": [
+    {
+      "name": "leave-api",
+      "description": "休暇申請API を呼ぶ（aud=leave-api）",
+      "protocol": "openid-connect",
+      "attributes": { "include.in.token.scope": "false", "display.on.consent.screen": "false" },
+      "protocolMappers": [
+        {
+          "name": "aud-leave-api", "protocol": "openid-connect", "protocolMapper": "oidc-audience-mapper",
+          "config": { "included.custom.audience": "leave-api", "access.token.claim": "true", "introspection.token.claim": "true" }
+        }
+      ]
+    },
+    {
+      "name": "leave-mcp-server",
+      "description": "休暇申請 MCP Server を呼ぶ（aud=leave-mcp-server）。claude-desktop の optional scope。MCP Server が 401 の WWW-Authenticate で scope=\"leave-mcp-server\" を返し、Claude がそれを要求したときだけ付く（業務 API ごとに scope を分け、aud を 1 つにする）",
+      "protocol": "openid-connect",
+      "attributes": { "include.in.token.scope": "true", "display.on.consent.screen": "true", "consent.screen.text": "休暇申請 MCP Server の利用" },
+      "protocolMappers": [
+        {
+          "name": "aud-leave-mcp-server", "protocol": "openid-connect", "protocolMapper": "oidc-audience-mapper",
+          "config": { "included.custom.audience": "leave-mcp-server", "access.token.claim": "true", "introspection.token.claim": "true" }
+        }
+      ]
+    },
+    {
+      "name": "leave-mcp:read",
+      "description": "休暇申請 MCP Server の参照系ツールを使う権限。claude-desktop・mcp-inspector の optional scope。mapper は無く、トークンの scope クレームに載ることだけが目的（MCP Server がツールごとに確認する）",
+      "protocol": "openid-connect",
+      "attributes": { "include.in.token.scope": "true", "display.on.consent.screen": "true", "consent.screen.text": "休暇の残日数・申請の参照（休暇申請 MCP Server）" }
+    },
+    {
+      "name": "leave-mcp:write",
+      "description": "休暇申請 MCP Server の更新系ツールを使う権限。claude-desktop・mcp-inspector の optional scope。MCP Server が足りないときに 403 insufficient_scope で要求し、MCP クライアントが再認可（step-up）で足す",
+      "protocol": "openid-connect",
+      "attributes": { "include.in.token.scope": "true", "display.on.consent.screen": "true", "consent.screen.text": "休暇の申請・取消などの更新（休暇申請 MCP Server）" }
+    },
+    {
+      "name": "profile",
+      "protocol": "openid-connect",
+      "attributes": { "include.in.token.scope": "true", "display.on.consent.screen": "true", "consent.screen.text": "${profileScopeConsentText}" },
+      "protocolMappers": [
+        {
+          "name": "username", "protocol": "openid-connect", "protocolMapper": "oidc-usermodel-attribute-mapper",
+          "config": { "user.attribute": "username", "claim.name": "preferred_username", "jsonType.label": "String",
+                      "id.token.claim": "true", "access.token.claim": "true", "userinfo.token.claim": "true", "introspection.token.claim": "true" }
+        },
+        {
+          "name": "given name", "protocol": "openid-connect", "protocolMapper": "oidc-usermodel-attribute-mapper",
+          "config": { "user.attribute": "firstName", "claim.name": "given_name", "jsonType.label": "String",
+                      "id.token.claim": "true", "access.token.claim": "true", "userinfo.token.claim": "true", "introspection.token.claim": "true" }
+        },
+        {
+          "name": "family name", "protocol": "openid-connect", "protocolMapper": "oidc-usermodel-attribute-mapper",
+          "config": { "user.attribute": "lastName", "claim.name": "family_name", "jsonType.label": "String",
+                      "id.token.claim": "true", "access.token.claim": "true", "userinfo.token.claim": "true", "introspection.token.claim": "true" }
+        }
+      ]
+    },
+    {
+      "name": "email",
+      "protocol": "openid-connect",
+      "attributes": { "include.in.token.scope": "true", "display.on.consent.screen": "true", "consent.screen.text": "${emailScopeConsentText}" },
+      "protocolMappers": [
+        {
+          "name": "email", "protocol": "openid-connect", "protocolMapper": "oidc-usermodel-attribute-mapper",
+          "config": { "user.attribute": "email", "claim.name": "email", "jsonType.label": "String",
+                      "id.token.claim": "true", "access.token.claim": "true", "userinfo.token.claim": "true", "introspection.token.claim": "true" }
+        },
+        {
+          "name": "email verified", "protocol": "openid-connect", "protocolMapper": "oidc-usermodel-property-mapper",
+          "config": { "user.attribute": "emailVerified", "claim.name": "email_verified", "jsonType.label": "boolean",
+                      "id.token.claim": "true", "access.token.claim": "true", "userinfo.token.claim": "true", "introspection.token.claim": "true" }
+        }
+      ]
+    },
+    {
+      "name": "offline_access",
+      "description": "OpenID Connect の offline_access。リフレッシュトークンを、ブラウザのログイン（SSO セッション）が切れても使える長期のもの（Keycloak でいう『オフライントークン』。中身は普通のリフレッシュトークン）にする。MCP クライアント（Claude・MCP Inspector）が要求してくる",
+      "protocol": "openid-connect",
+      "attributes": { "display.on.consent.screen": "true", "consent.screen.text": "${offlineAccessScopeConsentText}" }
+    },
+    {
+      "name": "basic",
+      "protocol": "openid-connect",
+      "attributes": { "include.in.token.scope": "false", "display.on.consent.screen": "false" },
+      "protocolMappers": [
+        {
+          "name": "sub", "protocol": "openid-connect", "protocolMapper": "oidc-sub-mapper",
+          "config": { "access.token.claim": "true", "introspection.token.claim": "true" }
+        },
+        {
+          "name": "auth_time", "protocol": "openid-connect", "protocolMapper": "oidc-usersessionmodel-note-mapper",
+          "config": { "user.session.note": "AUTH_TIME", "claim.name": "auth_time", "jsonType.label": "long",
+                      "id.token.claim": "true", "access.token.claim": "true", "userinfo.token.claim": "true", "introspection.token.claim": "true" }
+        }
+      ]
+    }
+  ],
+  "defaultDefaultClientScopes": ["profile", "email", "basic"],
+  "scopeMappings": [
+    { "clientScope": "offline_access", "roles": ["offline_access"] }
+  ],
+  "clients": [
+    {
+      "clientId": "leave-mcp-server",
+      "name": "休暇申請 MCP Server（Token Exchange 用）",
+      "description": "MCP Server が Claude のトークン（aud=leave-mcp-server）を、休暇申請API 用のトークン（aud=leave-api）に交換する（RFC 8693 Standard Token Exchange、impersonation）。subject token の aud にこの client_id が要るので、名前は leave-mcp-server",
+      "secret": "leave-mcp-server-secret",
+      "standardFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "attributes": { "standard.token.exchange.enabled": "true" },
+      "defaultClientScopes": ["profile", "email", "basic"],
+      "optionalClientScopes": ["leave-api"]
+    },
+    {
+      "clientId": "claude-desktop",
+      "name": "Claude（事前登録）",
+      "secret": "claude-desktop-secret",
+      "redirectUris": ["https://claude.ai/api/mcp/auth_callback"],
+      "webOrigins": [],
+      "standardFlowEnabled": true,
+      "directAccessGrantsEnabled": false,
+      "consentRequired": true,
+      "fullScopeAllowed": false,
+      "attributes": {
+        "pkce.code.challenge.method": "S256"
+      },
+      "defaultClientScopes": ["profile", "email", "basic"],
+      "optionalClientScopes": ["leave-mcp-server", "leave-mcp:read", "leave-mcp:write", "offline_access"]
+    },
+    {
+      "clientId": "mcp-inspector",
+      "name": "MCP Inspector（dev only）",
+      "secret": "mcp-inspector-secret",
+      "redirectUris": [
+        "http://127.0.0.1:6274/oauth/callback",
+        "http://localhost:6274/oauth/callback",
+        "http://127.0.0.1:6276/oauth/callback"
+      ],
+      "webOrigins": ["http://127.0.0.1:6274", "http://localhost:6274"],
+      "standardFlowEnabled": true,
+      "directAccessGrantsEnabled": false,
+      "consentRequired": true,
+      "fullScopeAllowed": false,
+      "attributes": {
+        "pkce.code.challenge.method": "S256"
+      },
+      "defaultClientScopes": ["profile", "email", "basic"],
+      "optionalClientScopes": ["leave-mcp-server", "leave-mcp:read", "leave-mcp:write", "offline_access"]
+    }
+  ],
+  "users": [
+    {
+      "username": "yamada", "enabled": true, "emailVerified": true, "email": "yamada@example.com",
+      "firstName": "太郎", "lastName": "山田", "realmRoles": ["default-roles-sample-corp"],
+      "credentials": [{ "type": "password", "value": "yamada", "temporary": false }]
+    },
+    {
+      "username": "suzuki", "enabled": true, "emailVerified": true, "email": "suzuki@example.com",
+      "firstName": "花子", "lastName": "鈴木", "realmRoles": ["default-roles-sample-corp"],
+      "credentials": [{ "type": "password", "value": "suzuki", "temporary": false }]
+    },
+    {
+      "username": "sato", "enabled": true, "emailVerified": true, "email": "sato@example.com",
+      "firstName": "一郎", "lastName": "佐藤", "realmRoles": ["default-roles-sample-corp"],
+      "credentials": [{ "type": "password", "value": "sato", "temporary": false }]
+    }
+  ]
+}

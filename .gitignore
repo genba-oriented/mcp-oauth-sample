@@ -1,0 +1,38 @@
+# Maven
+target/
+!.mvn/wrapper/maven-wrapper.jar
+.mvn/wrapper/maven-wrapper.jar
+
+# IDE
+.idea/
+*.iml
+.vscode/
+.settings/
+.classpath
+.project
+
+# Spring Boot / logs
+*.log
+application-local.yml
+application-local.properties
+
+# Secrets / env
+.env
+*.env
+
+# Keycloak — exported realm is meant to be committed; ignore runtime data only
+keycloak/data/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# dev.sh runtime (PIDs / logs)
+.logs/
+
+__pycache__
+
+
+# claude code
+.claude/worktrees
+.claude/settings.local.json

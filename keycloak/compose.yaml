@@ -1,0 +1,14 @@
+name: mcp-oauth-sample-keycloak
+services:
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.8.1
+    command: ["start-dev", "--import-realm"]
+    environment:
+      KC_BOOTSTRAP_ADMIN_USERNAME: admin
+      KC_BOOTSTRAP_ADMIN_PASSWORD: admin
+      KC_HTTP_PORT: "19000"
+      TZ: Asia/Tokyo
+    ports:
+      - "19000:19000"
+    volumes:
+      - ./import:/opt/keycloak/data/import

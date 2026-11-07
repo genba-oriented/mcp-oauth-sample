@@ -1,0 +1,8 @@
+# トンネルモード（../tunnel.sh）用の上書き。dev.sh が tunnel.env を見つけたときだけ compose.yaml に重ねる。
+#   issuer・リダイレクト URL をすべてトンネルの公開 URL にする。
+#   localhost:19000 でも引き続き応答するが、発行されるトークンの iss は公開 URL になる。
+services:
+  keycloak:
+    environment:
+      KC_HOSTNAME: ${KC_HOSTNAME:?KC_HOSTNAME が未設定（./tunnel.sh up を先に）}
+      KC_PROXY_HEADERS: xforwarded
